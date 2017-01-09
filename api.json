@@ -1,0 +1,123 @@
+{
+  "name": "org-server",
+  "base_url": "https://api.walrus.cool/org",
+
+  "headers": [
+    {
+      "name": "Authorization",
+      "type": "string",
+      "description": "A base-64-encoded JWT, i.e. `Authorization: Bearer <base64-jwt>`."
+    }
+  ],
+
+  "resources": {
+    "todo": {
+      "description": "Represents a basic todo entry in org-mode.",
+      "operations": [
+        {
+          "method": "GET",
+          "description": "Get all Todo items.",
+          "parameters": [
+            {
+              "name": "minimumId",
+              "type": "long",
+              "location": "query",
+              "required": false,
+              "description": "Only return entries with at least this ID."
+            }
+          ],
+          "responses": {
+            "200": {
+              "type": "map[todo]",
+              "description": "A mapping from store IDs to Todo items."
+            }
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/:id",
+          "description": "Retrieve a Todo item by its ID.",
+          "parameters": [
+            {"name": "id", "type": "long", "location": "path"}
+          ],
+          "responses": {
+            "200": {
+              "type": "todo"
+            }
+          }
+        },
+        {
+          "method": "DELETE",
+          "path": "/:id",
+          "description": "Delete a Todo item by its ID.",
+          "parameters": [
+            {"name": "id", "type": "long", "location": "path"}
+          ],
+          "responses": {
+            "200": {
+              "type": "unit"
+            }
+          }
+        },
+        {
+          "method": "PUT",
+          "path": "/:id",
+          "description": "Update a Todo item by its ID.",
+          "parameters": [
+            {"name": "id", "type": "long", "location": "path"}
+          ],
+          "responses": {
+            "200": {
+              "type": "todo"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "description": "Create a new Todo item.",
+          "responses": {
+            "201": {
+              "type": "todo",
+              "description": "The ID of the resource that was created."
+            }
+          }
+        }
+      ]
+    }
+  },
+
+  "models": {
+    "todo": {
+      "plural": "todos",
+      "fields": [
+        {
+          "name": "keyword",
+          "type": "string",
+          "description": "The todo keyword (e.g. TODO, NEXT, DONE).",
+          "example": "TODO"
+        },
+        {
+          "name": "headline",
+          "type": "string",
+          "example": "Sharpen tusks"
+        },
+        {
+          "name": "scheduled",
+          "type": "date-time-iso8601",
+          "required": false
+        },
+        {
+          "name": "deadline",
+          "type": "date-time-iso8601",
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "A freeform text body for this todo entry.",
+          "required": false
+        }
+      ]
+    }
+  }
+}
