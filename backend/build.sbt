@@ -10,6 +10,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  "org.typelevel" %% "cats" % "0.9.0",
+  "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
 )
 
 scalacOptions ++= Seq(
@@ -17,6 +19,8 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature"
 )
+
+routesImport += "models._"
 
 lazy val root = (
   project.in(file("."))
