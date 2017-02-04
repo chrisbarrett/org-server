@@ -10,6 +10,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  "com.softwaremill.quicklens" %% "quicklens" % "1.4.8",
   "org.typelevel" %% "cats" % "0.9.0",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
 )
@@ -21,6 +22,8 @@ scalacOptions ++= Seq(
 )
 
 routesImport += "models._"
+
+routesGenerator := play.routes.compiler.InjectedRoutesGenerator
 
 lazy val root = (
   project.in(file("."))
