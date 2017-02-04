@@ -1,6 +1,7 @@
 {
   "name": "org-server",
   "base_url": "https://api.walrus.cool/org",
+  "namespace": "cool.walrus.org",
 
   "headers": [
     {
