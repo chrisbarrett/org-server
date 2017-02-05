@@ -1,11 +1,12 @@
 package store
 
-import models.{ Nat, Todo }
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
-case class NotFound(key: Nat)
-  extends Exception(s"No document for key: $key")
+import models.{ Nat, Todo }
+
+case class NotFoundException(id: Nat)
+  extends Exception(s"No document for ID: ${id.value}")
   with NoStackTrace
 
 trait Store {
@@ -18,28 +19,28 @@ trait Store {
 class InMemoryStore extends Store {
   val list = new collection.mutable.ListBuffer[Todo]
 
-  def deleteAll() =
-    Future.successful(list.clear())
-
-  def getAllFromId(n: Nat) = {
-    val res =
-      list.zipWithIndex.collect {
-        case (todo, k) if n <= k ⇒
-          todo.copy(id = Some(Nat(k.toLong)))
-      }
-    Future.successful(res)
+  def deleteAll() = Future.successful {
+    list.clear()
   }
 
-  def getById(n: Nat) = {
-    val res = list.lift(n.toInt).getOrElse {
-      throw NotFound(n)
+  def getAllFromId(id: Nat) = Future.successful {
+    list.zipWithIndex.collect {
+      case (todo, key) if id <= key ⇒
+        todo.copy(id = Some(Nat(key.toLong)))
     }
-    Future.successful(res)
   }
 
-  def insert(todo: Todo): Future[Nat] = {
+  def getById(n: Nat) =
+    list.lift(n.toInt)
+      .map { todo ⇒
+        val updated = todo.copy(id = Some(n))
+        Future.successful(updated)
+      }
+      .getOrElse(Future.failed(NotFoundException(n)))
+
+  def insert(todo: Todo): Future[Nat] = Future.successful {
     list.append(todo.copy(id = None))
     val index = list.size - 1L
-    Future.successful(Nat(index))
+    Nat(index)
   }
 }

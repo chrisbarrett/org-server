@@ -1,19 +1,13 @@
 package models
 
-import play.api.libs.json._
-import play.api.data.validation.ValidationError
-import play.api.mvc.{ PathBindable, QueryStringBindable }
-
 import scala.language.implicitConversions
+
+import play.api.data.validation.ValidationError
+import play.api.libs.json._
+import play.api.mvc.{ PathBindable, QueryStringBindable }
 
 case class Nat(value: Long) {
   require(value >= 0)
-  def +(other: Nat) = value + other.value
-  def *(other: Nat) = value * other.value
-  def >(other: Nat) = value > other.value
-  def <(other: Nat) = value < other.value
-  def >=(other: Nat) = value >= other.value
-  def <=(other: Nat) = value <= other.value
 }
 
 object Nat {
