@@ -30,7 +30,10 @@ object Nat {
 
   implicit def pathStringBindable(implicit longBinder: PathBindable[Long]) = new PathBindable[Nat] {
     override def bind(key: String, value: String): Either[String, Nat] = {
-      longBinder.bind(key, value).right.map { Nat(_) }
+      longBinder.bind(key, value).right.flatMap {
+        case n if n >= 0 ⇒ Right(Nat(n))
+        case n           ⇒ Left(s"Path parameter $key must be 0 or greater")
+      }
     }
 
     override def unbind(key: String, x: Nat): String = longBinder.unbind(key, x.value)
@@ -38,7 +41,10 @@ object Nat {
 
   implicit def queryStringBindable(implicit longBinder: QueryStringBindable[Long]) = new QueryStringBindable[Nat] {
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Nat]] =
-      longBinder.bind(key, params).map(_.right.map(Nat(_)))
+      longBinder.bind(key, params).map(_.right.flatMap {
+        case n if n >= 0 ⇒ Right(Nat(n))
+        case n           ⇒ Left(s"Query parameter $key must be 0 or greater")
+      })
 
     override def unbind(key: String, x: Nat): String = longBinder.unbind(key, x.value)
   }
