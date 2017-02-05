@@ -1,1 +1,2 @@
-GET  /todos     @controllers.TodoController.getAll(minimumId: Nat ?= Nat.Zero)
+GET  /todos      @controllers.TodoController.getAll(minimumId: Nat ?= Nat.Zero)
+GET  /todos/:id  @controllers.TodoController.getById(id: Nat)

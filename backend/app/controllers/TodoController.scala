@@ -13,4 +13,9 @@ class TodoController @Inject() (store: Store) extends Controller {
     store.getAllFromId(n)
       .map { res ⇒ Ok(Json.toJson(res)) }
   }
+
+  def getById(n: Nat) = Action.async {
+    store.getById(n)
+      .map { res ⇒ Ok(Json.toJson(res)) }
+  }
 }

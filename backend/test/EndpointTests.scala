@@ -36,6 +36,10 @@ trait EndpointTest extends WordSpec with Matchers with ScalaFutures with Inspect
     status(response) shouldBe OK
   }
 
+  def badRequest(response: ⇒ Future[Result]) = "return 400 Bad Request" in {
+    status(response) shouldBe BAD_REQUEST
+  }
+
   // Sample data for seeding the store.
   val todos = Seq(
     Todo(keyword = "NEXT", headline = "Sharpen tusks"),
@@ -47,7 +51,7 @@ trait EndpointTest extends WordSpec with Matchers with ScalaFutures with Inspect
 
 class GetAll extends EndpointTest {
 
-  def getAll(minimumId: Option[Long] = None): Future[Result] = {
+  def getAll(minimumId: Option[Any] = None): Future[Result] = {
     val query = Map("minimumId" → minimumId)
       .collect { case (k, Some(v)) ⇒ s"$k=$v" }
       .mkString("?", "&", "")
@@ -87,6 +91,23 @@ class GetAll extends EndpointTest {
     }
   }
 
+  "minimum ID is not a number" should {
+    lazy val response = withSeededStore {
+      getAll(minimumId = Some("foo"))
+    }
+    behave like badRequest(response)
+  }
+
+  "minimum ID is negative" should {
+    lazy val response = withSeededStore {
+      getAll(minimumId = Some(-1))
+    }
+    behave like badRequest(response)
+    "foo" in {
+      println(contentAsString(response))
+    }
+  }
+
   "no records exceed the minimum ID" should {
     lazy val response = withSeededStore {
       getAll(minimumId = Some(100))
@@ -119,5 +140,13 @@ class GetAll extends EndpointTest {
         ids should contain inOrderOnly (2, 3)
       }
     }
+  }
+}
+
+class GetById extends EndpointTest {
+
+  def getAll(id: Any): Future[Result] = {
+    val url = s"/todos/$id"
+    route(app, FakeRequest(GET, url)).get
   }
 }

@@ -10,6 +10,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  filters,
   "com.softwaremill.quicklens" %% "quicklens" % "1.4.8",
   "org.typelevel" %% "cats" % "0.9.0",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
