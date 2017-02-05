@@ -25,7 +25,7 @@ class ServerErrorsFilter @Inject() (implicit val mat: Materializer) extends Filt
       .recover {
         case ex: Throwable ⇒
           val message = ex.getMessage
-          val response = ApiMessage(message, statusCode = INTERNAL_SERVER_ERROR)
+          val response = ApiMessage(message, INTERNAL_SERVER_ERROR, None)
           val js = Json.toJson(response)
           logger.error(message, ex)
           InternalServerError(js)

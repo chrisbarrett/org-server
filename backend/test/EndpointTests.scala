@@ -2,11 +2,12 @@ import scala.concurrent.Future
 
 import com.softwaremill.quicklens._
 import models.{ ApiMessage, Nat, Todo }
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ Inspectors, Matchers, WordSpec }
+import org.scalatest.concurrent.ScalaFutures
 import play.api.Application
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -34,12 +35,20 @@ trait EndpointTest extends WordSpec with Matchers with ScalaFutures with Inspect
     status(response) shouldBe OK
   }
 
+  def created(response: ⇒ Future[Result]) = "return 201 Created" in {
+    status(response) shouldBe CREATED
+  }
+
   def badRequest(response: ⇒ Future[Result]) = "return 400 Bad Request" in {
     status(response) shouldBe BAD_REQUEST
   }
 
   def notFound(response: ⇒ Future[Result]) = "return 404 Not Found" in {
     status(response) shouldBe NOT_FOUND
+  }
+
+  def unsupportedMediaType(response: ⇒ Future[Result]) = "return 415 Unsupported Media Type" in {
+    status(response) shouldBe UNSUPPORTED_MEDIA_TYPE
   }
 
   def jsonErrorMessage(response: ⇒ Future[Result]) = "should return a JSON error message" in {
@@ -191,6 +200,60 @@ class GetById extends EndpointTest {
         'headline (todos(2).headline)
       )
       // format: ON
+    }
+  }
+}
+
+class Create extends EndpointTest {
+
+  def create(body: Option[JsValue]): Future[Result] = {
+    val url = "/todos"
+    body match {
+      case None ⇒
+        route(app, FakeRequest(POST, url)).get
+      case Some(body) ⇒
+        route(app, FakeRequest(POST, url).withJsonBody(body)).get
+    }
+  }
+
+  "no body" should {
+    lazy val response = withEmptyStore {
+      create(body = None)
+    }
+
+    behave like unsupportedMediaType(response)
+    behave like jsonErrorMessage(response)
+  }
+
+  "malformed body" should {
+    lazy val response = withEmptyStore {
+      val json = Json.obj("title" → "foo")
+      create(body = Some(json))
+    }
+
+    behave like badRequest(response)
+    behave like jsonErrorMessage(response)
+  }
+
+  "valid todo" should {
+    val todo = Todo(
+      id = None,
+      keyword = "CANCELLED",
+      headline = "foo"
+    )
+    lazy val response = withSeededStore {
+      create(body = Some(Json.toJson(todo)))
+    }
+
+    behave like created(response)
+
+    "insert the todo" in {
+      val contents =
+        store.getAllFromId(Nat.Zero)
+          .futureValue
+          .modify(_.each.id).setTo(None)
+
+      contents should contain(todo)
     }
   }
 }
