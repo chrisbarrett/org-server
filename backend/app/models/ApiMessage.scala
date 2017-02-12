@@ -1,6 +1,6 @@
 package models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.RequestHeader
 
 case class RequestInfo(
@@ -19,7 +19,12 @@ object RequestInfo {
   )
 }
 
-case class ApiMessage(message: String, statusCode: Int, request: Option[RequestInfo])
+case class ApiMessage(
+  message:    String,
+  statusCode: Int,
+  request:    Option[RequestInfo] = None,
+  errors:     Seq[JsObject]       = Seq.empty
+)
 
 object ApiMessage {
   implicit val jsonFormat = Json.format[ApiMessage]

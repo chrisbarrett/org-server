@@ -1,23 +1,49 @@
 import scala.concurrent.Future
-import org.scalatestplus.play.OneAppPerSuite
 
 import com.softwaremill.quicklens._
-import models.{ ApiMessage, Nat, Todo }
+import configuration.AppConfig
+import models.{ ApiMessage, JwtToken, Nat, Todo, User }
 import org.scalatest.{ Inspectors, Matchers, WordSpec }
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.play.OneAppPerSuite
 import play.api.Application
+import play.api.http.Writeable
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.JwtEncoding
 import store._
 
 trait EndpointTest extends WordSpec
     with Matchers with ScalaFutures with Inspectors with OneAppPerSuite {
 
+  // Simplify construction of fake requests in these fixtures.
+
+  implicit class RichFakeRequest[T: Writeable](request: FakeRequest[T]) {
+    def withAuthorization(user: Option[User]) = user match {
+      case Some(user) ⇒
+        val token = JwtEncoding.encode(JwtToken(user), config.jwt.secret)
+        request.withHeaders(("Authorization", s"Bearer ${token.value}"))
+      case None ⇒
+        request
+    }
+
+    def routeWithBody(body: Option[JsValue]) = body match {
+      case None ⇒
+        route(app, request).get
+      case Some(body) ⇒
+        route(app, request.withJsonBody(body)).get
+    }
+  }
+
+  val standardUser = User(email = "example@example.com")
+
   lazy val store = new InMemoryStore
+
+  lazy val config = AppConfig.load().get
 
   override lazy val app: Application =
     new GuiceApplicationBuilder()
@@ -46,6 +72,10 @@ trait EndpointTest extends WordSpec
     status(response) shouldBe BAD_REQUEST
   }
 
+  def unauthorized(response: ⇒ Future[Result]) = "return 401 Unauthorized" in {
+    status(response) shouldBe UNAUTHORIZED
+  }
+
   def notFound(response: ⇒ Future[Result]) = "return 404 Not Found" in {
     status(response) shouldBe NOT_FOUND
   }
@@ -69,13 +99,19 @@ trait EndpointTest extends WordSpec
 
 class GetAll extends EndpointTest {
 
-  def getAll(minimumId: Option[Any] = None): Future[Result] = {
+  def getAll(minimumId: Option[Any] = None, user: Option[User] = Some(standardUser)): Future[Result] = {
     val query = Map("minimumId" → minimumId)
       .collect { case (k, Some(v)) ⇒ s"$k=$v" }
       .mkString("?", "&", "")
 
-    val url = "/todos" + query
-    route(app, FakeRequest(GET, url)).get
+    val request = FakeRequest(GET, "/todos" + query).withAuthorization(user)
+    route(app, request).get
+  }
+
+  "not authenticated" should {
+    lazy val response = getAll(user = None)
+    behave like unauthorized(response)
+    behave like jsonErrorMessage(response)
   }
 
   "no todos have been added" should {
@@ -162,9 +198,15 @@ class GetAll extends EndpointTest {
 
 class GetById extends EndpointTest {
 
-  def getById(id: Any): Future[Result] = {
-    val url = s"/todos/$id"
-    route(app, FakeRequest(GET, url)).get
+  def getById(id: Long, user: Option[User] = Some(standardUser)): Future[Result] = {
+    val request = FakeRequest(GET, s"/todos/$id").withAuthorization(user)
+    route(app, request).get
+  }
+
+  "not authenticated" should {
+    lazy val response = getById(user = None, id = 0)
+    behave like unauthorized(response)
+    behave like jsonErrorMessage(response)
   }
 
   "store is empty" should {
@@ -208,15 +250,16 @@ class GetById extends EndpointTest {
 }
 
 class Create extends EndpointTest {
+  def create(body: Option[JsValue], user: Option[User] = Some(standardUser)): Future[Result] = {
+    FakeRequest(POST, "/todos")
+      .withAuthorization(user)
+      .routeWithBody(body)
+  }
 
-  def create(body: Option[JsValue]): Future[Result] = {
-    val url = "/todos"
-    body match {
-      case None ⇒
-        route(app, FakeRequest(POST, url)).get
-      case Some(body) ⇒
-        route(app, FakeRequest(POST, url).withJsonBody(body)).get
-    }
+  "not authenticated" should {
+    lazy val response = create(user = None, body = None)
+    behave like unauthorized(response)
+    behave like jsonErrorMessage(response)
   }
 
   "no body" should {
