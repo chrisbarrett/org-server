@@ -23,7 +23,7 @@ class ErrorHandler extends HttpErrorHandler {
         message
 
     val info = Some(RequestInfo(request))
-    val payload = ApiMessage(message, statusCode, info)
+    val payload = ApiMessage(message2, statusCode, info)
     val response = Status(statusCode)(Json.toJson(payload))
     Future.successful(response)
   }
