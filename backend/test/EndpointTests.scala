@@ -294,12 +294,9 @@ class Create extends EndpointTest {
     behave like created(response)
 
     "insert the todo" in {
-      val contents =
-        store.getAllFromId(Nat.Zero)
-          .futureValue
-          .modify(_.each.id).setTo(None)
-
-      contents should contain(todo)
+      response.futureValue
+      val latest = store.getAllFromId(Nat.Zero).futureValue.last.modify(_.id).setTo(None)
+      latest shouldBe todo
     }
   }
 }
