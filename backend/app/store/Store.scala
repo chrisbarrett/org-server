@@ -16,6 +16,7 @@ trait Store {
   def getById(id: Nat): Future[Todo]
   def insert(todo: Todo): Future[Todo]
   def deleteById(id: Nat): Future[Unit]
+  def updateById(id: Nat, todo: Todo): Future[Todo]
 }
 
 class InMemoryStore extends Store {
@@ -45,6 +46,16 @@ class InMemoryStore extends Store {
     if (map.contains(id)) {
       map = map - id
       Future.successful(())
+    } else {
+      Future.failed(NotFoundException(id))
+    }
+  }
+
+  def updateById(id: Nat, todo: Todo): Future[Todo] = map.synchronized {
+    if (map.contains(id)) {
+      val updated = todo.copy(id = Some(id))
+      map = map + (id → updated)
+      Future.successful(updated)
     } else {
       Future.failed(NotFoundException(id))
     }

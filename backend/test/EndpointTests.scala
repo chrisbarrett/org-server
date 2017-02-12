@@ -367,3 +367,75 @@ class Delete extends EndpointTest {
     }
   }
 }
+
+class Update extends EndpointTest {
+  def update(id: Long, body: Option[JsValue], user: Option[User] = Some(standardUser)): Future[Result] = {
+    FakeRequest(PUT, s"/todos/$id")
+      .withAuthorization(user)
+      .routeWithBody(body)
+  }
+
+  "not authenticated" should {
+    lazy val response = update(id = 0, user = None, body = None)
+    behave like unauthorized(response)
+    behave like returnsApiMessage(response)
+  }
+
+  "no body" should {
+    lazy val response = withEmptyStore {
+      update(0, body = None)
+    }
+
+    behave like unsupportedMediaType(response)
+    behave like returnsApiMessage(response)
+  }
+
+  "malformed body" should {
+    lazy val response = withEmptyStore {
+      val json = Json.obj("title" → "foo")
+      update(id = 0, body = Some(json))
+    }
+
+    behave like badRequest(response)
+    behave like returnsApiMessage(response)
+  }
+
+  "valid todo" should {
+    val todo = Todo(
+      // Test the ID attribute is not propogated to the store.
+      id = Some(Nat(222)),
+      keyword = "CANCELLED",
+      headline = "foo"
+    )
+    lazy val response = withSeededStore {
+      update(id = 1, body = Some(Json.toJson(todo)))
+    }
+
+    behave like okay(response)
+
+    "return the updated todo" in {
+      val updated = contentAsJson(response).as[Todo]
+
+      // format: OFF
+      updated should have(
+        'id       (Some(Nat(1))),
+        'keyword  (todo.keyword),
+        'headline (todo.headline)
+      )
+      // format: ON
+    }
+
+    "update the todo" in {
+      response.futureValue
+      val updated = store.getById(Nat(1)).futureValue
+
+      // format: OFF
+      updated should have(
+        'id       (Some(Nat(1))),
+        'keyword  (todo.keyword),
+        'headline (todo.headline)
+      )
+      // format: ON
+    }
+  }
+}
