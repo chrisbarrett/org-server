@@ -1,4 +1,5 @@
 import scala.concurrent.Future
+import org.scalatestplus.play.OneAppPerSuite
 
 import com.softwaremill.quicklens._
 import models.{ ApiMessage, Nat, Todo }
@@ -13,10 +14,12 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import store._
 
-trait EndpointTest extends WordSpec with Matchers with ScalaFutures with Inspectors {
+trait EndpointTest extends WordSpec
+    with Matchers with ScalaFutures with Inspectors with OneAppPerSuite {
+
   lazy val store = new InMemoryStore
 
-  val app: Application =
+  override lazy val app: Application =
     new GuiceApplicationBuilder()
       .overrides(bind[Store].toInstance(store))
       .build
