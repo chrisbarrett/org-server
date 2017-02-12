@@ -1,3 +1,4 @@
-GET  /todos      @controllers.TodoController.getAll(minimumId: Nat ?= Nat.Zero)
-GET  /todos/:id  @controllers.TodoController.getById(id: Nat)
-POST /todos      @controllers.TodoController.create()
+GET     /todos      @controllers.TodoController.getAll(minimumId: Nat ?= Nat.Zero)
+GET     /todos/:id  @controllers.TodoController.getById(id: Nat)
+POST    /todos      @controllers.TodoController.create()
+DELETE  /todos/:id  @controllers.TodoController.deleteById(id: Nat)

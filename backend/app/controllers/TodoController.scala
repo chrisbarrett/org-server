@@ -29,6 +29,16 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
       }
   }
 
+  def deleteById(n: Nat) = authenticated.async {
+    store.deleteById(n)
+      .map { _ ⇒ Ok }
+      .recover {
+        case ex: NotFoundException ⇒
+          val message = ApiMessage(ex.getMessage, NOT_FOUND, None)
+          NotFound(Json.toJson(message))
+      }
+  }
+
   def create() = authenticated.async { request ⇒
     withJsonBody[Todo](request) { todo ⇒
       store.insert(todo).map { id ⇒ Created(Json.toJson(id)) }

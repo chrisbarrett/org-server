@@ -303,3 +303,49 @@ class Create extends EndpointTest {
     }
   }
 }
+
+class Delete extends EndpointTest {
+  def delete(id: Long, user: Option[User] = Some(standardUser)): Future[Result] = {
+    val request = FakeRequest(DELETE, s"/todos/$id").withAuthorization(user)
+    route(app, request).get
+  }
+
+  "not authenticated" should {
+    lazy val response = delete(id = 0, user = None)
+    behave like unauthorized(response)
+    behave like jsonErrorMessage(response)
+  }
+
+  "store is empty" should {
+
+    lazy val response = withEmptyStore {
+      delete(0)
+    }
+
+    behave like notFound(response)
+    behave like jsonErrorMessage(response)
+  }
+
+  "todo does not exist for that ID" should {
+    lazy val response = withSeededStore {
+      delete(100)
+    }
+
+    behave like notFound(response)
+    behave like jsonErrorMessage(response)
+  }
+
+  "todo exists for that ID" should {
+    lazy val response = withSeededStore {
+      delete(2)
+    }
+
+    behave like okay(response)
+
+    "remove that entry from the store" in {
+      response.futureValue
+      val storeContent = store.getAllFromId(Nat(0)).futureValue
+      storeContent should not contain (todos(2))
+    }
+  }
+}
