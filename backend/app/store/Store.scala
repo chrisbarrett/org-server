@@ -11,36 +11,62 @@ case class NotFoundException(id: Nat)
 
 trait Store {
   def deleteAll(): Future[Unit]
-  def getAllFromId(id: Nat): Future[Iterable[Todo]]
+  def getAllFromId(id: Nat): Future[Seq[Todo]]
   def getById(id: Nat): Future[Todo]
   def insert(todo: Todo): Future[Nat]
+  def deleteById(id: Nat): Future[Unit]
 }
 
 class InMemoryStore extends Store {
-  val list = new collection.mutable.ListBuffer[Todo]
+  var map = Map.empty[Nat, Todo]
 
-  def deleteAll() = Future.successful {
-    list.clear()
+  def deleteAll(): Future[Unit] = {
+    map.synchronized { map = Map.empty }
+    Future.successful(())
   }
 
-  def getAllFromId(id: Nat) = Future.successful {
-    list.zipWithIndex.collect {
-      case (todo, key) if id <= key ⇒
-        todo.copy(id = Some(Nat(key.toLong)))
+  def getAllFromId(id: Nat): Future[Seq[Todo]] = {
+    val results = map.synchronized {
+      map.collect {
+        case (key, todo) if id <= key ⇒
+          key → todo.copy(id = Some(key))
+      }
+    }
+
+    Future.successful(
+      results.toSeq
+        .sortBy { case (k, v) ⇒ k.toLong }
+        .map(_._2)
+    )
+  }
+
+  def deleteById(id: Nat): Future[Unit] = map.synchronized {
+    if (map.contains(id)) {
+      map = map - id
+      Future.successful(())
+    } else {
+      Future.failed(NotFoundException(id))
     }
   }
 
-  def getById(n: Nat) =
-    list.lift(n.toInt)
+  def getById(id: Nat): Future[Todo] = {
+    val lookup = map.synchronized { map.get(id) }
+    lookup
       .map { todo ⇒
-        val updated = todo.copy(id = Some(n))
+        val updated = todo.copy(id = Some(id))
         Future.successful(updated)
       }
-      .getOrElse(Future.failed(NotFoundException(n)))
+      .getOrElse {
+        Future.failed(NotFoundException(id))
+      }
+  }
 
-  def insert(todo: Todo): Future[Nat] = Future.successful {
-    list.append(todo.copy(id = None))
-    val index = list.size - 1L
-    Nat(index)
+  def insert(todo: Todo): Future[Nat] = {
+    val res = map.synchronized {
+      val key = if (map.isEmpty) Nat.Zero else Nat(map.keySet.map(_.toLong).max + 1)
+      map = map + (key → todo.copy(id = None))
+      Nat(key)
+    }
+    Future.successful(res)
   }
 }
