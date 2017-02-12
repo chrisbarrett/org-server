@@ -84,7 +84,7 @@ trait EndpointTest extends WordSpec
     status(response) shouldBe UNSUPPORTED_MEDIA_TYPE
   }
 
-  def jsonErrorMessage(response: ⇒ Future[Result]) = "should return a JSON error message" in {
+  def returnsApiMessage(response: ⇒ Future[Result]) = "should return a JSON API message" in {
     contentAsJson(response).asOpt[ApiMessage] shouldBe defined
   }
 
@@ -111,7 +111,7 @@ class GetAll extends EndpointTest {
   "not authenticated" should {
     lazy val response = getAll(user = None)
     behave like unauthorized(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "no todos have been added" should {
@@ -150,7 +150,7 @@ class GetAll extends EndpointTest {
       getAll(minimumId = Some("foo"))
     }
     behave like badRequest(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "minimum ID is negative" should {
@@ -158,7 +158,7 @@ class GetAll extends EndpointTest {
       getAll(minimumId = Some(-1))
     }
     behave like badRequest(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "no records exceed the minimum ID" should {
@@ -206,7 +206,7 @@ class GetById extends EndpointTest {
   "not authenticated" should {
     lazy val response = getById(user = None, id = 0)
     behave like unauthorized(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "store is empty" should {
@@ -216,7 +216,7 @@ class GetById extends EndpointTest {
     }
 
     behave like notFound(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "todo does not exist for that ID" should {
@@ -225,7 +225,7 @@ class GetById extends EndpointTest {
     }
 
     behave like notFound(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "todo exists for that ID" should {
@@ -259,7 +259,7 @@ class Create extends EndpointTest {
   "not authenticated" should {
     lazy val response = create(user = None, body = None)
     behave like unauthorized(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "no body" should {
@@ -268,7 +268,7 @@ class Create extends EndpointTest {
     }
 
     behave like unsupportedMediaType(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "malformed body" should {
@@ -278,7 +278,7 @@ class Create extends EndpointTest {
     }
 
     behave like badRequest(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "valid todo" should {
@@ -310,7 +310,7 @@ class Delete extends EndpointTest {
   "not authenticated" should {
     lazy val response = delete(id = 0, user = None)
     behave like unauthorized(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "store is empty" should {
@@ -320,7 +320,7 @@ class Delete extends EndpointTest {
     }
 
     behave like notFound(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "todo does not exist for that ID" should {
@@ -329,7 +329,7 @@ class Delete extends EndpointTest {
     }
 
     behave like notFound(response)
-    behave like jsonErrorMessage(response)
+    behave like returnsApiMessage(response)
   }
 
   "todo exists for that ID" should {
