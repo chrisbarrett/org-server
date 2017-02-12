@@ -287,16 +287,36 @@ class Create extends EndpointTest {
       keyword = "CANCELLED",
       headline = "foo"
     )
+
     lazy val response = withSeededStore {
       create(body = Some(Json.toJson(todo)))
     }
 
     behave like created(response)
 
+    "return the inserted todo" in {
+      val output = contentAsJson(response).as[Todo]
+
+      output.id shouldBe defined
+
+      // format: OFF
+      output should have(
+        'keyword  (todo.keyword),
+        'headline (todo.headline)
+      )
+      // format: ON
+    }
+
     "insert the todo" in {
-      response.futureValue
-      val latest = store.getAllFromId(Nat.Zero).futureValue.last.modify(_.id).setTo(None)
-      latest shouldBe todo
+      val latest = store.getAllFromId(Nat.Zero).futureValue.last
+      latest.id shouldBe defined
+
+      // format: OFF
+      latest should have(
+        'keyword  (todo.keyword),
+        'headline (todo.headline)
+      )
+      // format: ON
     }
   }
 }
@@ -338,6 +358,7 @@ class Delete extends EndpointTest {
     }
 
     behave like okay(response)
+    behave like returnsApiMessage(response)
 
     "remove that entry from the store" in {
       response.futureValue

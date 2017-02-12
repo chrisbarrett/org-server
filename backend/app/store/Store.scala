@@ -1,5 +1,6 @@
 package store
 
+import com.softwaremill.quicklens._
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
@@ -13,7 +14,7 @@ trait Store {
   def deleteAll(): Future[Unit]
   def getAllFromId(id: Nat): Future[Seq[Todo]]
   def getById(id: Nat): Future[Todo]
-  def insert(todo: Todo): Future[Nat]
+  def insert(todo: Todo): Future[Todo]
   def deleteById(id: Nat): Future[Unit]
 }
 
@@ -61,12 +62,13 @@ class InMemoryStore extends Store {
       }
   }
 
-  def insert(todo: Todo): Future[Nat] = {
-    val res = map.synchronized {
+  def insert(todo: Todo): Future[Todo] = {
+    val id = map.synchronized {
       val key = if (map.isEmpty) Nat.Zero else Nat(map.keySet.map(_.toLong).max + 1)
       map = map + (key → todo.copy(id = None))
       Nat(key)
     }
+    val res = todo.modify(_.id).setTo(Some(id))
     Future.successful(res)
   }
 }
