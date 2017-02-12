@@ -1,9 +1,9 @@
 package store
 
-import com.softwaremill.quicklens._
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
+import com.softwaremill.quicklens._
 import models.{ Nat, Todo }
 
 case class NotFoundException(id: Nat)

@@ -1,15 +1,12 @@
 package controllers
 
-import models.RequestInfo
-import play.api.libs.json.Reads
-import play.api.mvc.Request
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 import javax.inject.{ Inject, Singleton }
-import models.{ ApiMessage, Nat, Todo }
-import play.api.libs.json.{ Json, JsSuccess, JsError }
+import models.{ ApiMessage, Nat, RequestInfo, Todo }
+import play.api.libs.json.{ JsError, JsSuccess, Json, Reads }
 import play.api.mvc._
-import scala.concurrent.Future
 import store.{ NotFoundException, Store }
 
 @Singleton

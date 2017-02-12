@@ -1,7 +1,7 @@
 package globals
 
-import configuration._
 import com.google.inject.AbstractModule
+import configuration._
 import store.{ InMemoryStore, Store }
 
 class AppModule extends AbstractModule {
