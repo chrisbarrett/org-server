@@ -3,3 +3,5 @@ GET     /todos/:id  @controllers.TodoController.getById(id: Nat)
 POST    /todos      @controllers.TodoController.create()
 DELETE  /todos/:id  @controllers.TodoController.deleteById(id: Nat)
 PUT     /todos/:id  @controllers.TodoController.updateById(id: Nat)
+
+GET     /liveness   @controllers.LivenessController.getLiveness()
