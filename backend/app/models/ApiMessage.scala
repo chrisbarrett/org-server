@@ -22,8 +22,8 @@ object RequestInfo {
 case class ApiMessage(
   message:    String,
   statusCode: Int,
-  request:    Option[RequestInfo] = None,
-  errors:     Seq[JsObject]       = Seq.empty
+  request:    Option[RequestInfo],
+  errors:     Seq[JsObject]
 )
 
 object ApiMessage {

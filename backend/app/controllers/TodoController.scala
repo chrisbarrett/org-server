@@ -47,7 +47,7 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
   def deleteById(n: Nat) = authenticated.async {
     store.deleteById(n)
       .map { _ ⇒
-        val message = ApiMessage("Deleted", OK, None)
+        val message = ApiMessage("Deleted", OK, None, Seq.empty)
         Ok(Json.toJson(message))
       }
       .recover {
@@ -83,7 +83,8 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
       }
       .getOrElse {
         val info = RequestInfo(request)
-        val message = ApiMessage("Expected a JSON body.", UNSUPPORTED_MEDIA_TYPE, Some(info))
+        val err = Json.obj("message" → "Expected a JSON body")
+        val message = ApiMessage("Expected a JSON body.", UNSUPPORTED_MEDIA_TYPE, Some(info), Seq(err))
         val result = UnsupportedMediaType(Json.toJson(message))
         Future.successful(result)
       }

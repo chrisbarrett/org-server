@@ -37,7 +37,8 @@ class Authenticated @Inject() (encoding: JwtEncoding) extends ActionBuilder[Auth
       }
 
   private def reject(reason: String): Future[Result] = {
-    val message = ApiMessage(reason, UNAUTHORIZED, None)
+    val err = Json.obj("message" → reason)
+    val message = ApiMessage(reason, UNAUTHORIZED, None, Seq(err))
     Future.successful(Unauthorized(Json.toJson(message)))
   }
 }
