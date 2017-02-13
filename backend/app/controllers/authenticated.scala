@@ -23,8 +23,11 @@ class Authenticated @Inject() (encoding: JwtEncoding) extends ActionBuilder[Auth
       .get("Authorization")
       .map {
         case Bearer(tok) ⇒
-          val decoded = encoding.decode(EncodedToken(tok)).get
-          accept(AuthenticatedRequest(decoded.user, request))
+          Future
+            .fromTry(encoding.decode(EncodedToken(tok)))
+            .flatMap { auth ⇒
+              accept(AuthenticatedRequest(auth.user, request))
+            }
         case _ ⇒
           reject("Authorization header had malformed Bearer")
       }
@@ -33,7 +36,7 @@ class Authenticated @Inject() (encoding: JwtEncoding) extends ActionBuilder[Auth
       }
       .recoverWith {
         case ex: JwtValidationException ⇒
-          reject("JWT verification failed")
+          reject(ex.getMessage)
       }
 
   private def reject(reason: String): Future[Result] = {
