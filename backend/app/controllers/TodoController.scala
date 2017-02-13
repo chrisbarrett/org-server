@@ -16,13 +16,18 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
       .map { res ⇒ Ok(Json.toJson(res)) }
   }
 
+  private def notFound(message: String) = {
+    val err = Json.obj("message" → message)
+    val result = ApiMessage(message, NOT_FOUND, None, Seq(err))
+    NotFound(Json.toJson(result))
+  }
+
   def getById(n: Nat) = authenticated.async {
     store.getById(n)
       .map { res ⇒ Ok(Json.toJson(res)) }
       .recover {
         case ex: NotFoundException ⇒
-          val message = ApiMessage(ex.getMessage, NOT_FOUND, None)
-          NotFound(Json.toJson(message))
+          notFound(ex.getMessage)
       }
   }
 
@@ -34,8 +39,7 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
         }
         .recover {
           case ex: NotFoundException ⇒
-            val message = ApiMessage(ex.getMessage, NOT_FOUND, None)
-            NotFound(Json.toJson(message))
+            notFound(ex.getMessage)
         }
     }
   }
@@ -48,8 +52,7 @@ class TodoController @Inject() (authenticated: Authenticated, store: Store) exte
       }
       .recover {
         case ex: NotFoundException ⇒
-          val message = ApiMessage(ex.getMessage, NOT_FOUND, None)
-          NotFound(Json.toJson(message))
+          notFound(ex.getMessage)
       }
   }
 

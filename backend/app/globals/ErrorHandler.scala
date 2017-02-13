@@ -23,13 +23,16 @@ class ErrorHandler extends HttpErrorHandler {
         message
 
     val info = Some(RequestInfo(request))
-    val payload = ApiMessage(message2, statusCode, info)
+    val err = Json.obj("description" → message2)
+    val payload = ApiMessage(message2, statusCode, info, errors = Seq(err))
     val response = Status(statusCode)(Json.toJson(payload))
     Future.successful(response)
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    val payload = ApiMessage("Internal server error", INTERNAL_SERVER_ERROR, None)
+    val message = "Internal server error"
+    val err = Json.obj("description" → message)
+    val payload = ApiMessage(message, INTERNAL_SERVER_ERROR, None, Seq(err))
     Future.successful(Status(INTERNAL_SERVER_ERROR)(Json.toJson(payload)))
   }
 }
