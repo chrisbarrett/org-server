@@ -2,8 +2,9 @@ package globals
 
 import scala.concurrent.Future
 
-import javax.inject.Singleton
+import javax.inject.{ Inject, Singleton }
 import models.{ ApiMessage, RequestInfo }
+import play.Environment
 import play.api.http.HttpErrorHandler
 import play.api.http.Status.{ INTERNAL_SERVER_ERROR, NOT_FOUND }
 import play.api.libs.json.Json
@@ -14,7 +15,7 @@ import play.api.mvc.Results.Status
 // HTML web page that Play returns by default.
 
 @Singleton
-class ErrorHandler extends HttpErrorHandler {
+class ErrorHandler @Inject() (environment: Environment) extends HttpErrorHandler {
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
     val message2 =
       if (message.isEmpty && statusCode == NOT_FOUND)
@@ -31,7 +32,22 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     val message = "Internal server error"
-    val err = Json.obj("description" → message)
+    val err = if (environment.isDev) {
+      Json.obj(
+        "description" → exception.getMessage,
+        "class" → exception.getClass.getName.toString,
+        "trace" → exception.getStackTrace.map { frame ⇒
+          Json.obj(
+            "file" → frame.getFileName,
+            "line" → frame.getLineNumber,
+            "class" → frame.getClassName,
+            "method" → frame.getMethodName
+          )
+        }
+      )
+    } else {
+      Json.obj("description" → message)
+    }
     val payload = ApiMessage(message, INTERNAL_SERVER_ERROR, None, Seq(err))
     Future.successful(Status(INTERNAL_SERVER_ERROR)(Json.toJson(payload)))
   }
