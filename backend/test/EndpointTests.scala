@@ -25,7 +25,7 @@ trait EndpointTest extends WordSpec
   implicit class RichFakeRequest[T: Writeable](request: FakeRequest[T]) {
     def withAuthorization(user: Option[User]) = user match {
       case Some(user) ⇒
-        val token = JwtEncoding.encode(JwtToken(user), config.jwt.secret)
+        val token = JwtEncoding.encode(JwtToken(user.email), config.jwt.secret)
         request.withHeaders(("Authorization", s"Bearer ${token.value}"))
       case None ⇒
         request

@@ -26,7 +26,7 @@ class Authenticated @Inject() (encoding: JwtEncoding) extends ActionBuilder[Auth
           Future
             .fromTry(encoding.decode(EncodedToken(tok)))
             .flatMap { auth ⇒
-              accept(AuthenticatedRequest(auth.user, request))
+              accept(AuthenticatedRequest(User(auth.email), request))
             }
         case _ ⇒
           reject("Authorization header had malformed Bearer")
